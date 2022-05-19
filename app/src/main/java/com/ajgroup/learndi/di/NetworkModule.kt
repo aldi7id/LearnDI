@@ -2,6 +2,8 @@ package com.ajgroup.learndi.di
 
 import com.ajgroup.learndi.data.ApiHelper
 import com.ajgroup.learndi.data.ApiService
+import com.chuckerteam.chucker.api.ChuckerCollector
+import com.chuckerteam.chucker.api.ChuckerInterceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.core.module.dsl.singleOf
@@ -13,6 +15,7 @@ val BASE_URL = "https://api.themoviedb.org/3/"
 val networkModule = module {
         single {
             OkHttpClient.Builder()
+                //.addInterceptor(get<HttpLoggingInterceptor>())
                 .addInterceptor { chain ->
                     val original = chain.request()
                     val url = original.url.newBuilder()
@@ -22,6 +25,14 @@ val networkModule = module {
                     val request = original.newBuilder().url(url).build()
                     chain.proceed(request)
                 }
+                .addInterceptor(
+                    ChuckerInterceptor.Builder(get())
+                        .collector(ChuckerCollector(get()))
+                        .maxContentLength(2500000L)
+                        .redactHeaders(emptySet())
+                        .alwaysReadResponseBody(false)
+                        .build()
+                )
                 .build()
         }
         single {
